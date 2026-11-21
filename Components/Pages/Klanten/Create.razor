@@ -1,0 +1,60 @@
+@page "/klanten/nieuw"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Nieuwe klant</PageTitle>
+
+<h1>Nieuwe klant</h1>
+
+<div class="row mt-3">
+    <div class="col-md-6">
+        <EditForm Model="klant" OnValidSubmit="OpslaanAsync" FormName="CreateKlantForm">
+            <DataAnnotationsValidator />
+            <ValidationSummary class="text-danger mb-3" />
+
+            <div class="mb-3">
+                <label for="naam" class="form-label">Naam</label>
+                <InputText id="naam" class="form-control" @bind-Value="klant.Naam" />
+                <ValidationMessage For="() => klant.Naam" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="adres" class="form-label">Adres</label>
+                <InputText id="adres" class="form-control" @bind-Value="klant.Adres" />
+                <ValidationMessage For="() => klant.Adres" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="postcode" class="form-label">Postcode</label>
+                <InputText id="postcode" class="form-control" @bind-Value="klant.Postcode" />
+                <ValidationMessage For="() => klant.Postcode" class="text-danger" />
+            </div>
+
+            <div class="mb-3">
+                <label for="woonplaats" class="form-label">Woonplaats</label>
+                <InputText id="woonplaats" class="form-control" @bind-Value="klant.Woonplaats" />
+                <ValidationMessage For="() => klant.Woonplaats" class="text-danger" />
+            </div>
+
+            <div class="d-flex gap-2">
+                <button type="submit" class="btn btn-primary" disabled="@bezigMetOpslaan">Opslaan</button>
+                <a class="btn btn-secondary" href="/klanten">Annuleren</a>
+            </div>
+        </EditForm>
+    </div>
+</div>
+
+@code {
+    private Klant klant = new();
+    private bool bezigMetOpslaan;
+
+    private async Task OpslaanAsync()
+    {
+        bezigMetOpslaan = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        db.Klanten.Add(klant);
+        await db.SaveChangesAsync();
+        Navigation.NavigateTo("/klanten");
+    }
+}

@@ -1,0 +1,80 @@
+@page "/klanten/verwijderen/{Id:int}"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+@inject NavigationManager Navigation
+
+<PageTitle>Klant verwijderen</PageTitle>
+
+<h1>Klant verwijderen</h1>
+
+@if (laden)
+{
+    <p><em>Gegevens laden...</em></p>
+}
+else if (klant is null)
+{
+    <div class="alert alert-warning">Klant niet gevonden.</div>
+    <a class="btn btn-secondary" href="/klanten">Terug naar overzicht</a>
+}
+else
+{
+    <div class="alert alert-danger mt-3">
+        Weet je zeker dat je deze klant wilt verwijderen?
+    </div>
+
+    <dl class="row">
+        <dt class="col-sm-3">Naam</dt>
+        <dd class="col-sm-9">@klant.Naam</dd>
+
+        <dt class="col-sm-3">Adres</dt>
+        <dd class="col-sm-9">@klant.Adres</dd>
+
+        <dt class="col-sm-3">Postcode</dt>
+        <dd class="col-sm-9">@klant.Postcode</dd>
+
+        <dt class="col-sm-3">Woonplaats</dt>
+        <dd class="col-sm-9">@klant.Woonplaats</dd>
+    </dl>
+
+    <div class="d-flex gap-2 mt-3">
+        <button class="btn btn-danger" @onclick="VerwijderenAsync" disabled="@bezigMetVerwijderen">Ja, verwijderen</button>
+        <a class="btn btn-secondary" href="/klanten">Annuleren</a>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Klant? klant;
+    private bool laden = true;
+    private bool bezigMetVerwijderen;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        laden = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        klant = await db.Klanten
+            .AsNoTracking()
+            .FirstOrDefaultAsync(k => k.Id == Id);
+        laden = false;
+    }
+
+    private async Task VerwijderenAsync()
+    {
+        if (klant is null)
+        {
+            return;
+        }
+
+        bezigMetVerwijderen = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        var bestaand = await db.Klanten.FindAsync(Id);
+        if (bestaand is not null)
+        {
+            db.Klanten.Remove(bestaand);
+            await db.SaveChangesAsync();
+        }
+        Navigation.NavigateTo("/klanten");
+    }
+}

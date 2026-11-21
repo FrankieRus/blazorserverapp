@@ -1,0 +1,60 @@
+@page "/klanten/details/{Id:int}"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Klantdetails</PageTitle>
+
+<h1>Klantdetails</h1>
+
+@if (laden)
+{
+    <p><em>Gegevens laden...</em></p>
+}
+else if (klant is null)
+{
+    <div class="alert alert-warning">Klant niet gevonden.</div>
+    <a class="btn btn-secondary" href="/klanten">Terug naar overzicht</a>
+}
+else
+{
+    <dl class="row mt-3">
+        <dt class="col-sm-3">ID</dt>
+        <dd class="col-sm-9">@klant.Id</dd>
+
+        <dt class="col-sm-3">Naam</dt>
+        <dd class="col-sm-9">@klant.Naam</dd>
+
+        <dt class="col-sm-3">Adres</dt>
+        <dd class="col-sm-9">@klant.Adres</dd>
+
+        <dt class="col-sm-3">Postcode</dt>
+        <dd class="col-sm-9">@klant.Postcode</dd>
+
+        <dt class="col-sm-3">Woonplaats</dt>
+        <dd class="col-sm-9">@klant.Woonplaats</dd>
+    </dl>
+
+    <div class="d-flex gap-2 mt-3">
+        <a class="btn btn-primary" href="/klanten/bewerken/@klant.Id">Bewerken</a>
+        <a class="btn btn-outline-danger" href="/klanten/verwijderen/@klant.Id">Verwijderen</a>
+        <a class="btn btn-secondary" href="/klanten">Terug naar overzicht</a>
+    </div>
+}
+
+@code {
+    [Parameter]
+    public int Id { get; set; }
+
+    private Klant? klant;
+    private bool laden = true;
+
+    protected override async Task OnParametersSetAsync()
+    {
+        laden = true;
+        await using var db = await DbFactory.CreateDbContextAsync();
+        klant = await db.Klanten
+            .AsNoTracking()
+            .FirstOrDefaultAsync(k => k.Id == Id);
+        laden = false;
+    }
+}

@@ -1,0 +1,88 @@
+@page "/klanten"
+@rendermode InteractiveServer
+@inject IDbContextFactory<AppDbContext> DbFactory
+
+<PageTitle>Klanten</PageTitle>
+
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h1 class="mb-0">Klanten</h1>
+    <a class="btn btn-primary" href="/klanten/nieuw">+ Nieuwe klant</a>
+</div>
+
+<div class="mb-3" style="max-width: 420px;">
+    <input class="form-control"
+           type="search"
+           placeholder="Zoek op naam, adres, postcode of woonplaats..."
+           @bind="zoekterm"
+           @bind:event="oninput" />
+</div>
+
+@if (klanten is null)
+{
+    <p><em>Klanten laden...</em></p>
+}
+else if (!GefilterdeKlanten.Any())
+{
+    <div class="alert alert-info">
+        @(string.IsNullOrWhiteSpace(zoekterm)
+            ? "Er zijn nog geen klanten toegevoegd."
+            : $"Geen klanten gevonden voor '{zoekterm}'.")
+    </div>
+}
+else
+{
+    <div class="table-responsive">
+        <table class="table table-striped table-hover align-middle">
+            <thead>
+                <tr>
+                    <th>Naam</th>
+                    <th>Adres</th>
+                    <th>Postcode</th>
+                    <th>Woonplaats</th>
+                    <th class="text-end">Acties</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var klant in GefilterdeKlanten)
+                {
+                    <tr>
+                        <td>@klant.Naam</td>
+                        <td>@klant.Adres</td>
+                        <td>@klant.Postcode</td>
+                        <td>@klant.Woonplaats</td>
+                        <td class="text-end text-nowrap">
+                            <a class="btn btn-sm btn-outline-secondary me-1" href="/klanten/details/@klant.Id">Details</a>
+                            <a class="btn btn-sm btn-outline-primary me-1" href="/klanten/bewerken/@klant.Id">Bewerken</a>
+                            <a class="btn btn-sm btn-outline-danger" href="/klanten/verwijderen/@klant.Id">Verwijderen</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+}
+
+@code {
+    private List<Klant>? klanten;
+    private string zoekterm = string.Empty;
+
+    private IEnumerable<Klant> GefilterdeKlanten =>
+        klanten is null
+            ? []
+            : string.IsNullOrWhiteSpace(zoekterm)
+                ? klanten
+                : klanten.Where(k =>
+                    k.Naam.Contains(zoekterm, StringComparison.OrdinalIgnoreCase) ||
+                    k.Adres.Contains(zoekterm, StringComparison.OrdinalIgnoreCase) ||
+                    k.Postcode.Contains(zoekterm, StringComparison.OrdinalIgnoreCase) ||
+                    k.Woonplaats.Contains(zoekterm, StringComparison.OrdinalIgnoreCase));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        klanten = await db.Klanten
+            .AsNoTracking()
+            .OrderBy(k => k.Naam)
+            .ToListAsync();
+    }
+}
