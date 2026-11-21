@@ -3,13 +3,20 @@ set -euo pipefail
 
 PID_FILE="/tmp/blazorserverapp.pid"
 LOG_FILE="/tmp/blazorserverapp.log"
+SYNC_PID_FILE="/tmp/blazorserverapp-sync.pid"
+SYNC_LOG_FILE="/tmp/blazorserverapp-sync.log"
 PORT="${PORT:-5080}"
 
 if [ -f "$PID_FILE" ]; then
   OLD_PID="$(cat "$PID_FILE" || true)"
   if [ -n "$OLD_PID" ] && kill -0 "$OLD_PID" 2>/dev/null; then
-    kill "$OLD_PID" 2>/dev/null || true
-    sleep 1
+    kill -- "-$OLD_PID" 2>/dev/null || kill "$OLD_PID" 2>/dev/null || true
+    for _ in $(seq 1 10); do
+      if ! kill -0 "$OLD_PID" 2>/dev/null; then
+        break
+      fi
+      sleep 0.5
+    done
   fi
   rm -f "$PID_FILE"
 fi
@@ -18,6 +25,17 @@ fi
 setsid dotnet run --no-launch-profile --project BlazorServerApp.csproj --urls "http://0.0.0.0:${PORT}" </dev/null >"$LOG_FILE" 2>&1 &
 NEW_PID=$!
 echo "$NEW_PID" > "$PID_FILE"
+
+if [ "${SKIP_AUTO_SYNC:-0}" != "1" ]; then
+  if [ -f "$SYNC_PID_FILE" ]; then
+    OLD_SYNC_PID="$(cat "$SYNC_PID_FILE" || true)"
+    if [ -n "$OLD_SYNC_PID" ] && kill -0 "$OLD_SYNC_PID" 2>/dev/null; then
+      kill "$OLD_SYNC_PID" 2>/dev/null || true
+    fi
+    rm -f "$SYNC_PID_FILE"
+  fi
+  setsid bash .devcontainer/auto-sync.sh </dev/null >>"$SYNC_LOG_FILE" 2>&1 &
+fi
 
 for _ in $(seq 1 30); do
   if curl -fsS "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then

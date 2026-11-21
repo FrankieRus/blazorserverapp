@@ -4,7 +4,7 @@
     {
       "label": "stop-background",
       "type": "shell",
-      "command": "if [ -f /tmp/blazorserverapp.pid ]; then kill $(cat /tmp/blazorserverapp.pid) 2>/dev/null || true; rm -f /tmp/blazorserverapp.pid; fi",
+      "command": "for f in /tmp/blazorserverapp-sync.pid /tmp/blazorserverapp.pid; do if [ -f \"$f\" ]; then p=$(cat \"$f\"); kill -- \"-$p\" 2>/dev/null || kill \"$p\" 2>/dev/null || true; rm -f \"$f\"; fi; done",
       "problemMatcher": []
     },
     {
