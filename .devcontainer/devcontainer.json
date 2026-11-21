@@ -1,0 +1,26 @@
+{
+  "name": "BlazorServerApp (.NET 10)",
+  "image": "mcr.microsoft.com/devcontainers/dotnet:10.0-noble",
+  "forwardPorts": [5080],
+  "portsAttributes": {
+    "5080": {
+      "label": "BlazorServerApp",
+      "protocol": "http",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "containerEnv": {
+    "ASPNETCORE_ENVIRONMENT": "Development",
+    "ASPNETCORE_URLS": "http://0.0.0.0:5080"
+  },
+  "postCreateCommand": "dotnet restore && dotnet build",
+  "postStartCommand": "bash .devcontainer/start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-dotnettools.csdevkit",
+        "ms-dotnettools.csharp"
+      ]
+    }
+  }
+}

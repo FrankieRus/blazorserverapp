@@ -1,0 +1,40 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "stop-background",
+      "type": "shell",
+      "command": "if [ -f /tmp/blazorserverapp.pid ]; then kill $(cat /tmp/blazorserverapp.pid) 2>/dev/null || true; rm -f /tmp/blazorserverapp.pid; fi",
+      "problemMatcher": []
+    },
+    {
+      "label": "build",
+      "command": "dotnet",
+      "type": "process",
+      "dependsOn": "stop-background",
+      "args": [
+        "build",
+        "${workspaceFolder}/BlazorServerApp.csproj",
+        "/property:GenerateFullPaths=true",
+        "/consoleloggerparameters:NoSummary"
+      ],
+      "problemMatcher": "$msCompile"
+    },
+    {
+      "label": "watch",
+      "command": "dotnet",
+      "type": "process",
+      "dependsOn": "stop-background",
+      "args": [
+        "watch",
+        "run",
+        "--no-launch-profile",
+        "--project",
+        "${workspaceFolder}/BlazorServerApp.csproj",
+        "--urls",
+        "http://0.0.0.0:5080"
+      ],
+      "problemMatcher": "$msCompile"
+    }
+  ]
+}
